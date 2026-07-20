@@ -25,7 +25,7 @@ export interface Question {
 
 export type GameMode = 'classic' | 'time_attack' | 'survival' | 'rapid_fire';
 
-export type Theme = 'blue_neon' | 'gold_premium' | 'cyber' | 'galaxy' | 'minimal' | 'purple' | 'crimson';
+export type Theme = 'blue_neon' | 'gold_premium' | 'cyber' | 'galaxy' | 'minimal' | 'purple' | 'crimson' | 'studio_light';
 
 export interface LeaderboardEntry {
   id: string;

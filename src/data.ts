@@ -427,5 +427,15 @@ export const THEME_CONFIGS: Record<string, { name: string; bg: string; text: str
     glow: 'shadow-[0_0_30px_rgba(239,68,68,0.4)]',
     textHex: '#fff1f2',
     accentHex: '#ef4444',
+  },
+  studio_light: {
+    name: 'Studio Light',
+    bg: 'bg-slate-50 text-slate-900',
+    text: 'text-slate-900',
+    primary: 'border-slate-300 bg-white shadow-sm hover:border-amber-500 hover:bg-amber-50 text-slate-900',
+    secondary: 'text-amber-600',
+    glow: 'shadow-[0_0_20px_rgba(245,158,11,0.05)]',
+    textHex: '#0f172a',
+    accentHex: '#f59e0b',
   }
 };

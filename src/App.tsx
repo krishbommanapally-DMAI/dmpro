@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trophy, Brain, Flame, Coins, Award, Zap, Clock, ShieldCheck, Heart, Sparkles, Play, Settings, Database, User, Volume2, VolumeX, Radio, Tv } from 'lucide-react';
 import { Question, GameMode, GameSettings, LeaderboardEntry, UserProfile, Achievement } from './types';
-import { DEFAULT_ACHIEVEMENTS, INITIAL_SETTINGS, DEFAULT_QUESTIONS, DEFAULT_LEADERBOARD } from './data';
+import { DEFAULT_ACHIEVEMENTS, INITIAL_SETTINGS, DEFAULT_QUESTIONS, DEFAULT_LEADERBOARD, THEME_CONFIGS } from './data';
 import { audioService } from './services/audioService';
 
 // Import our modular custom sub-components
@@ -204,9 +204,14 @@ export default function App() {
     });
   };
 
+  const themeConfig = THEME_CONFIGS[settings.theme] || THEME_CONFIGS.blue_neon;
+  const isLightTheme = settings.theme === 'studio_light';
+
   return (
     <div
-      className={`min-h-screen relative overflow-hidden bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950 ${
+      className={`min-h-screen relative overflow-hidden ${themeConfig.bg} selection:bg-amber-500 selection:text-slate-950 ${
+        isLightTheme ? 'light-theme' : ''
+      } ${
         settings.creatorMode ? 'cursor-none select-none' : ''
       }`}
     >

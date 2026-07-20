@@ -1,0 +1,6 @@
+{
+  "name": "Cinematic Quiz Show",
+  "description": "A premium, cinematic television game show experience designed for content creators and quiz enthusiasts, complete with synthesized sound effects, dazzling visual styles, dynamic game modes, and AI-powered question generation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

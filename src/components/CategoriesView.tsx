@@ -6,11 +6,12 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Globe, Cpu, Award, Smile, Flag, MapPin, Sparkles, Brain, Flame, Zap, ArrowLeft, ShieldAlert } from 'lucide-react';
-import { GameMode, Category } from '../types';
+import { GameMode, Category, Question } from '../types';
 import { DEFAULT_CATEGORIES } from '../data';
 import { audioService } from '../services/audioService';
 
 interface CategoriesViewProps {
+  questions?: Question[];
   onSelect: (category: string, mode: GameMode) => void;
   onBack: () => void;
 }
@@ -55,8 +56,28 @@ const CATEGORIES_ICONS: Record<string, any> = {
   MapPin,
 };
 
-export const CategoriesView: React.FC<CategoriesViewProps> = ({ onSelect, onBack }) => {
+export const CategoriesView: React.FC<CategoriesViewProps> = ({ questions = [], onSelect, onBack }) => {
   const [selectedMode, setSelectedMode] = useState<GameMode>('classic');
+
+  const computedCategories = React.useMemo(() => {
+    const list = [...DEFAULT_CATEGORIES];
+    const questionCategories = Array.from(new Set(questions.map((q) => q.category))).filter(Boolean);
+    
+    questionCategories.forEach((catId) => {
+      const exists = list.some((c) => c.id === catId);
+      if (!exists) {
+        const cleanName = catId.charAt(0).toUpperCase() + catId.slice(1).replace(/_/g, ' ');
+        list.push({
+          id: catId,
+          name: cleanName,
+          description: `Custom, imported, or AI-generated questions for the ${cleanName} category.`,
+          icon: 'Sparkles',
+          color: 'from-pink-500 to-rose-500',
+        });
+      }
+    });
+    return list;
+  }, [questions]);
 
   const handleSelectCategory = (catId: string) => {
     audioService.playCorrect();
@@ -129,8 +150,8 @@ export const CategoriesView: React.FC<CategoriesViewProps> = ({ onSelect, onBack
       <div className="space-y-4">
         <h2 className="text-xs font-mono tracking-wider uppercase text-amber-400 font-bold">Step 2: Pick Your Category</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {/* Default Categories */}
-          {DEFAULT_CATEGORIES.map((cat) => {
+          {/* Categories */}
+          {computedCategories.map((cat) => {
             const Icon = CATEGORIES_ICONS[cat.icon] || Globe;
             return (
               <button

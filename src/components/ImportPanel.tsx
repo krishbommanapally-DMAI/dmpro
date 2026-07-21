@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { FileText, Database, Code, Upload, Plus, Trash2, ArrowRight, Sparkles, Check, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { Question, Difficulty, QuestionType } from '../types';
+import { DEFAULT_CATEGORIES } from '../data';
 import { audioService } from '../services/audioService';
 
 interface ImportPanelProps {
@@ -19,6 +20,26 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ onImportComplete, onBa
   const [importType, setImportType] = useState<'text' | 'json' | 'csv'>('text');
   const [previewQuestions, setPreviewQuestions] = useState<Question[]>([]);
   const [parsingError, setParsingError] = useState<string | null>(null);
+
+  const [targetCategoryMode, setTargetCategoryMode] = useState<'detect' | 'preset' | 'custom'>('detect');
+  const [selectedPresetCategory, setSelectedPresetCategory] = useState('general');
+  const [customCategoryName, setCustomCategoryName] = useState('');
+
+  const getSelectedCategoryId = (detectedCategory?: string): string => {
+    if (targetCategoryMode === 'preset') {
+      return selectedPresetCategory;
+    }
+    if (targetCategoryMode === 'custom') {
+      return customCategoryName.trim().toLowerCase() || 'custom';
+    }
+    return detectedCategory || 'imported';
+  };
+
+  const handleUpdatePreviewCategory = (index: number, newCat: string) => {
+    const updated = [...previewQuestions];
+    updated[index].category = newCat.trim().toLowerCase();
+    setPreviewQuestions(updated);
+  };
 
   const handleParseText = () => {
     setParsingError(null);
@@ -42,7 +63,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ onImportComplete, onBa
           explanation: item.explanation || 'Created via JSON import.',
           hint: item.hint || 'No hint provided.',
           difficulty: (item.difficulty as Difficulty) || 'medium',
-          category: item.category || 'imported',
+          category: getSelectedCategoryId(item.category),
           points: item.difficulty === 'hard' ? 200 : item.difficulty === 'medium' ? 150 : 100,
         }));
         setPreviewQuestions(loaded);
@@ -74,7 +95,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ onImportComplete, onBa
               explanation,
               hint: 'Identify the correct statement.',
               difficulty: 'medium',
-              category: 'imported',
+              category: getSelectedCategoryId(cols[7]),
               points: 150,
             });
           }
@@ -201,7 +222,7 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ onImportComplete, onBa
       explanation: q.explanation || 'Imported plain text.',
       hint: q.hint || 'No hint provided.',
       difficulty: q.difficulty || 'medium',
-      category: q.category || 'imported',
+      category: getSelectedCategoryId(q.category),
       points: q.difficulty === 'hard' ? 200 : q.difficulty === 'medium' ? 150 : 100,
     });
   };
@@ -310,6 +331,70 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ onImportComplete, onBa
               )}
             </div>
 
+            {/* Target Category Classification Control */}
+            <div className="mb-4 space-y-2 border border-pink-500/10 p-3.5 rounded-2xl bg-slate-950/50">
+              <label className="text-[10px] font-mono text-pink-400 block uppercase tracking-wider font-bold">
+                Target Category Classification
+              </label>
+              
+              <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-white/5">
+                {[
+                  { mode: 'detect', label: 'Auto-Detect' },
+                  { mode: 'preset', label: 'Built-in Preset' },
+                  { mode: 'custom', label: 'New Custom' }
+                ].map((option) => (
+                  <button
+                    key={option.mode}
+                    type="button"
+                    onClick={() => { setTargetCategoryMode(option.mode as any); audioService.playClick(); }}
+                    className={`py-1.5 text-[9px] font-mono font-bold uppercase rounded-lg transition-all cursor-pointer ${
+                      targetCategoryMode === option.mode
+                        ? 'bg-pink-500 text-white font-extrabold shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              {targetCategoryMode === 'preset' && (
+                <div className="space-y-1 pt-1">
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Select Built-in Destination</label>
+                  <select
+                    value={selectedPresetCategory}
+                    onChange={(e) => { setSelectedPresetCategory(e.target.value); audioService.playClick(); }}
+                    className="w-full p-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-slate-200 font-sans focus:outline-none focus:border-pink-500/50"
+                  >
+                    {DEFAULT_CATEGORIES.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {targetCategoryMode === 'custom' && (
+                <div className="space-y-1 pt-1">
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Type Custom Category Name</label>
+                  <input
+                    type="text"
+                    value={customCategoryName}
+                    onChange={(e) => setCustomCategoryName(e.target.value)}
+                    placeholder="e.g. World History, Pop Culture, Gaming"
+                    className="w-full p-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-slate-200 font-sans focus:outline-none focus:border-pink-500/50 placeholder-slate-600"
+                  />
+                </div>
+              )}
+
+              {targetCategoryMode === 'detect' && (
+                <p className="text-[9px] text-slate-500 font-sans italic leading-relaxed">
+                  The parser will read from the imported metadata / source tags or assign to "imported" by default.
+                </p>
+              )}
+            </div>
+
             {/* Input area */}
             <textarea
               id="import-source-area"
@@ -363,13 +448,20 @@ export const ImportPanel: React.FC<ImportPanelProps> = ({ onImportComplete, onBa
                     className="p-4 bg-slate-950 border border-white/5 rounded-2xl flex items-start justify-between gap-4 relative group"
                   >
                     <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 flex-wrap">
                         <span className="w-5 h-5 rounded-full bg-slate-900 text-slate-400 font-mono text-[10px] font-bold flex items-center justify-center border border-white/5">
                           {index + 1}
                         </span>
-                        <span className="bg-slate-900 border border-white/5 text-slate-400 text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase">
-                          {q.category}
-                        </span>
+                        <div className="flex items-center gap-1 bg-slate-900/60 border border-white/5 px-2 py-0.5 rounded">
+                          <span className="text-[9px] text-slate-500 font-mono uppercase">Category:</span>
+                          <input
+                            type="text"
+                            value={q.category}
+                            onChange={(e) => handleUpdatePreviewCategory(index, e.target.value)}
+                            placeholder="category"
+                            className="bg-transparent text-pink-400 text-[9px] font-mono font-bold w-24 focus:outline-none uppercase"
+                          />
+                        </div>
                         <span className="bg-slate-900 border border-white/5 text-slate-400 text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase">
                           {q.difficulty}
                         </span>

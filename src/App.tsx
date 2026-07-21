@@ -176,8 +176,25 @@ export default function App() {
   };
 
   // Handle NotebookLM parsing completed
-  const handleImportComplete = (imported: Question[]) => {
-    setQuestions((prev) => [...imported, ...prev]);
+  const handleImportComplete = async (imported: Question[]) => {
+    try {
+      const response = await fetch('/api/questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(imported)
+      });
+      if (response.ok) {
+        const addedQs = await response.json();
+        setQuestions((prev) => [...addedQs, ...prev]);
+      } else {
+        setQuestions((prev) => [...imported, ...prev]);
+      }
+    } catch (e) {
+      console.warn('Failed to save imported questions to API server. Falling back to local state memory.', e);
+      setQuestions((prev) => [...imported, ...prev]);
+    }
     setScreen('home');
     if (particlesCanvasRef.current) {
       particlesCanvasRef.current.triggerSuccess();

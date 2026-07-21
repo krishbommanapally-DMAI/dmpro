@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Sparkles, Brain, Cpu, Send, Check, AlertTriangle, RefreshCw, Layers } from 'lucide-react';
 import { Question, Difficulty } from '../types';
+import { DEFAULT_CATEGORIES } from '../data';
 import { audioService } from '../services/audioService';
 
 interface AIWidgetProps {
@@ -32,6 +33,20 @@ export const AIWidget: React.FC<AIWidgetProps> = ({ onQuestionsGenerated, onBack
   const [success, setSuccess] = useState(false);
   const [generatedCount, setGeneratedCount] = useState(0);
 
+  const [targetCategoryMode, setTargetCategoryMode] = useState<'detect' | 'preset' | 'custom'>('detect');
+  const [selectedPresetCategory, setSelectedPresetCategory] = useState('general');
+  const [customCategoryName, setCustomCategoryName] = useState('');
+
+  const getSelectedCategory = (): string => {
+    if (targetCategoryMode === 'preset') {
+      return selectedPresetCategory;
+    }
+    if (targetCategoryMode === 'custom') {
+      return customCategoryName.trim().toLowerCase() || 'ai_generated';
+    }
+    return 'ai_generated';
+  };
+
   const handleGenerate = async () => {
     if (!topic.trim()) {
       setError('Please provide a topic or theme first.');
@@ -51,7 +66,7 @@ export const AIWidget: React.FC<AIWidgetProps> = ({ onQuestionsGenerated, onBack
           topic: topic.trim(),
           difficulty,
           count: questionCount,
-          category: 'AI Generated'
+          category: getSelectedCategory()
         }),
       });
 
@@ -118,6 +133,70 @@ export const AIWidget: React.FC<AIWidgetProps> = ({ onQuestionsGenerated, onBack
                 placeholder="e.g., Quantum Mechanics Paradoxes, Marvel Phase 4 Trivia, European Flags"
                 className="w-full p-4 bg-slate-950 border border-white/5 rounded-2xl text-sm text-slate-200 focus:outline-none focus:border-cyan-500/50 font-sans placeholder-slate-600 transition-all"
               />
+            </div>
+
+            {/* Target Category Control */}
+            <div className="space-y-2.5 border border-cyan-500/15 p-4 rounded-2xl bg-slate-950/45">
+              <label className="text-[10px] font-mono text-cyan-400 block uppercase tracking-wider font-bold">
+                Destination Category Classification
+              </label>
+              
+              <div className="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-white/5">
+                {[
+                  { mode: 'detect', label: 'Default (AI Generated)' },
+                  { mode: 'preset', label: 'Built-in Preset' },
+                  { mode: 'custom', label: 'New Custom' }
+                ].map((option) => (
+                  <button
+                    key={option.mode}
+                    type="button"
+                    onClick={() => { setTargetCategoryMode(option.mode as any); audioService.playClick(); }}
+                    className={`py-1.5 text-[9px] font-mono font-bold uppercase rounded-lg transition-all cursor-pointer ${
+                      targetCategoryMode === option.mode
+                        ? 'bg-cyan-500 text-slate-950 font-extrabold shadow-sm'
+                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              {targetCategoryMode === 'preset' && (
+                <div className="space-y-1 pt-1">
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Select Built-in Destination</label>
+                  <select
+                    value={selectedPresetCategory}
+                    onChange={(e) => { setSelectedPresetCategory(e.target.value); audioService.playClick(); }}
+                    className="w-full p-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-slate-200 font-sans focus:outline-none focus:border-cyan-500/50"
+                  >
+                    {DEFAULT_CATEGORIES.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {targetCategoryMode === 'custom' && (
+                <div className="space-y-1 pt-1">
+                  <label className="text-[9px] font-mono text-slate-500 block uppercase">Type Custom Category Name</label>
+                  <input
+                    type="text"
+                    value={customCategoryName}
+                    onChange={(e) => setCustomCategoryName(e.target.value)}
+                    placeholder="e.g. Science, Space, History, Cinema"
+                    className="w-full p-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-slate-200 font-sans focus:outline-none focus:border-cyan-500/50 placeholder-slate-600"
+                  />
+                </div>
+              )}
+
+              {targetCategoryMode === 'detect' && (
+                <p className="text-[9px] text-slate-500 font-sans italic leading-relaxed">
+                  Questions will be automatically grouped into the "AI Generated" category tab in your choice arena.
+                </p>
+              )}
             </div>
 
             {/* Configuration options */}

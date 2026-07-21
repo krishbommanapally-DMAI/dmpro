@@ -588,6 +588,7 @@ export default function App() {
 
               {screen === 'categories' && (
                 <CategoriesView
+                  questions={questions}
                   onSelect={handleStartQuiz}
                   onBack={() => setScreen('home')}
                 />

@@ -272,17 +272,33 @@ app.get('/api/questions', (req, res) => {
   res.json(localQuestions);
 });
 
-// Import or add custom question
+// Import or add custom question (handles single or bulk array)
 app.post('/api/questions', (req, res) => {
-  const newQuestion = req.body;
-  if (!newQuestion.id) {
-    newQuestion.id = 'q_' + Math.random().toString(36).substr(2, 9);
+  const data = req.body;
+  if (Array.isArray(data)) {
+    const added: any[] = [];
+    for (const item of data) {
+      if (!item.id) {
+        item.id = 'q_' + Math.random().toString(36).substring(2, 11);
+      }
+      if (!item.points) {
+        item.points = item.difficulty === 'hard' ? 200 : item.difficulty === 'medium' ? 150 : 100;
+      }
+      localQuestions.unshift(item);
+      added.push(item);
+    }
+    return res.status(201).json(added);
+  } else {
+    const newQuestion = data;
+    if (!newQuestion.id) {
+      newQuestion.id = 'q_' + Math.random().toString(36).substring(2, 11);
+    }
+    if (!newQuestion.points) {
+      newQuestion.points = newQuestion.difficulty === 'hard' ? 200 : newQuestion.difficulty === 'medium' ? 150 : 100;
+    }
+    localQuestions.unshift(newQuestion);
+    return res.status(201).json(newQuestion);
   }
-  if (!newQuestion.points) {
-    newQuestion.points = newQuestion.difficulty === 'hard' ? 200 : newQuestion.difficulty === 'medium' ? 150 : 100;
-  }
-  localQuestions.unshift(newQuestion);
-  res.status(201).json(newQuestion);
 });
 
 // Reset questions
